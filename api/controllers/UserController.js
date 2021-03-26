@@ -1,6 +1,6 @@
-const db = require('../../database/conn')();
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
+const db = require("../../database/conn")();
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 
 const timeToExpire = 60 * 60 * 24; // Um dia
 
@@ -24,9 +24,43 @@ module.exports = (app) => {
 
     let query = db.query(sql, (err, result) => {
       if (err) {
-        res.status(400).send({ message: 'Unknown error' });
+        res.status(400).send({ message: "Unknown error" });
       } else {
         res.status(200).send(result[0]);
+      }
+    });
+  };
+
+  userController.getAllUsersExceptMe = (req, res) => {
+    var token = req.headers["authorization"];
+    token = token.replace("Bearer ", "");
+    let secret = process.env.SECRET;
+    jwt.verify(token, secret, function (err, decoded) {
+      if (err) {
+        return res
+          .status(401)
+          .send({ auth: false, message: "Token inválido." });
+      } else {
+        let userId = decoded.id;
+        let sql = `SELECT 
+          userId,
+          userName,
+          userPhone,
+          '' AS userPass,
+          userAccessGranted,
+          userCreatedAt,
+          '' AS userToken,
+          '' AS userRefreshToken
+          FROM user
+          WHERE userId != ${userId}`;
+
+        db.query(sql, (err, result) => {
+          if (err) {
+            res.status(400).send({ message: "Unknown error" });
+          } else {
+            res.status(200).send(result);
+          }
+        });
       }
     });
   };
@@ -37,21 +71,21 @@ module.exports = (app) => {
 
     const secret = process.env.SECRET;
     const paswordHash = crypto
-      .createHmac('sha512', secret)
+      .createHmac("sha512", secret)
       .update(password)
-      .digest('hex');
+      .digest("hex");
 
     var sql = `SELECT userId, userAccessGranted FROM user WHERE userPhone = '${phone}' AND userPass = '${paswordHash}'`;
 
     db.query(sql, (err, result) => {
       if (err) {
-        res.status(400).send({ message: 'Unknown error' });
+        res.status(400).send({ message: "Unknown error" });
       } else if (result.length == 0) {
-        res.status(401).send({ message: 'Invalid credentials' });
+        res.status(401).send({ message: "Invalid credentials" });
       } else {
         var data = result[0];
         if (data.userAccessGranted == 0) {
-          res.status(400).send({ message: 'Access denied' });
+          res.status(400).send({ message: "Access denied" });
         } else {
           const userId = data.userId;
 
@@ -70,7 +104,7 @@ module.exports = (app) => {
           sql = `UPDATE user SET userToken = '${token}', userRefreshToken = '${refreshToken}' WHERE userId = ${userId}`;
           query = db.query(sql, (err, result) => {
             if (err) {
-              res.status(400).send({ message: 'Unknown error' });
+              res.status(400).send({ message: "Unknown error" });
             } else {
               sql = `SELECT 
               userId,
@@ -86,7 +120,7 @@ module.exports = (app) => {
 
               query = db.query(sql, (err, result) => {
                 if (err) {
-                  res.status(400).send({ message: 'Unknown error' });
+                  res.status(400).send({ message: "Unknown error" });
                 } else {
                   data = result[0];
                   res.status(200).send(data);
@@ -103,7 +137,7 @@ module.exports = (app) => {
     const refreshToken = req.body.refreshToken;
 
     if (refreshToken == undefined) {
-      res.status(400).send({ message: 'refreshToken inválido.' });
+      res.status(400).send({ message: "refreshToken inválido." });
       return;
     }
 
@@ -113,7 +147,7 @@ module.exports = (app) => {
       if (err) {
         return res
           .status(401)
-          .send({ auth: false, message: 'Token inválido.' });
+          .send({ auth: false, message: "Token inválido." });
       } else {
         let userId = decoded.id * 1;
 
@@ -132,7 +166,7 @@ module.exports = (app) => {
         sql = `UPDATE user SET userToken = '${token}', userRefreshToken = '${refreshToken}' WHERE userId = ${userId}`;
         query = db.query(sql, (err, result) => {
           if (err) {
-            res.status(400).send({ message: 'Unknown error' });
+            res.status(400).send({ message: "Unknown error" });
           } else {
             sql = `SELECT 
             userId,
@@ -148,7 +182,7 @@ module.exports = (app) => {
 
             db.query(sql, (err, result) => {
               if (err) {
-                res.status(400).send({ message: 'Unknown error' });
+                res.status(400).send({ message: "Unknown error" });
               } else {
                 data = result[0];
                 res.status(200).send(data);
@@ -167,30 +201,30 @@ module.exports = (app) => {
 
     if (userName == undefined) {
       res.status(400).send({
-        message: 'Invalid name.',
+        message: "Invalid name.",
       });
       return;
     }
 
     if (userPhone == undefined) {
       res.status(400).send({
-        message: 'Invalid phone number.',
+        message: "Invalid phone number.",
       });
       return;
     }
 
     if (userPass == undefined) {
       res.status(400).send({
-        message: 'Invalid password.',
+        message: "Invalid password.",
       });
       return;
     }
 
     const secret = process.env.SECRET;
     const hashPass = crypto
-      .createHmac('sha512', secret)
+      .createHmac("sha512", secret)
       .update(userPass)
-      .digest('hex');
+      .digest("hex");
 
     var sql = `INSERT INTO user (
       userName, 
@@ -201,7 +235,7 @@ module.exports = (app) => {
     db.query(sql, (err, result) => {
       if (err) {
         if (err.errno == 1062) {
-          res.status(401).send({ message: 'User already registered' });
+          res.status(401).send({ message: "User already registered" });
         } else {
           res.status(401).send({ message: err.sqlMessage });
         }
@@ -217,12 +251,6 @@ module.exports = (app) => {
     const userPhone = req.body.userPhone;
     const userPass = req.body.userPass;
     const userAccessGranted = req.body.userAccessGranted;
-
-
-
-
-
-
   };
 
   userController.deleteUser = (req, res, next) => {
@@ -232,7 +260,7 @@ module.exports = (app) => {
 
     db.query(sql, (err, result) => {
       if (err) {
-        res.status(400).send({ message: 'Unknown error' });
+        res.status(400).send({ message: "Unknown error" });
       } else {
         res.status(200).send(result[0]);
       }
