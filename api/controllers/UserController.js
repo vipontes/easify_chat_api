@@ -17,6 +17,7 @@ module.exports = (app) => {
     '' AS userPass,
     userAccessGranted,
     userCreatedAt,
+    userImage,
     userToken,
     userRefreshToken
     FROM user
@@ -49,6 +50,7 @@ module.exports = (app) => {
           '' AS userPass,
           userAccessGranted,
           userCreatedAt,
+          userImage,
           '' AS userToken,
           '' AS userRefreshToken
           FROM user
@@ -113,6 +115,7 @@ module.exports = (app) => {
               '' AS userPass,
               userAccessGranted,
               userCreatedAt,
+              userImage,
               userToken,
               userRefreshToken
               FROM user
@@ -175,6 +178,7 @@ module.exports = (app) => {
             '' AS userPass,
             userAccessGranted,
             userCreatedAt,
+            userImage,
             userToken,
             userRefreshToken
             FROM user
@@ -251,6 +255,7 @@ module.exports = (app) => {
     const userPhone = req.body.userPhone;
     const userPass = req.body.userPass;
     const userAccessGranted = req.body.userAccessGranted;
+    const userImage = req.body.userImage;
   };
 
   userController.deleteUser = (req, res, next) => {
